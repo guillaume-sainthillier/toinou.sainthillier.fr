@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toinou A-t-il Ses Enfants Cette Semaine ?</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            transition: background-color 0.5s ease;
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 40px;
+        }
+        
+        .answer {
+            font-size: 8rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: row;
+            flex-wrap: wrap;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+        
+        .info {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            opacity: 0.7;
+            margin-top: 40px;
+        }
+        
+        .yes {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .no {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .countdown {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .inline-date-input {
+            padding: 5px 8px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 1rem;
+            font-family: inherit;
+            display: inline;
+        }
+
+        @media (max-width: 768px) {
+            .answer {
+                font-size: 4rem;
+            }
+            .subtitle {
+                font-size: 1.5rem;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="answer" id="answer">Chargement...</div>
+        <div class="subtitle" id="subtitle">Calcul en cours...</div>
+        <div class="countdown" id="countdown"></div>
+        <div class="info">
+            Toinou a ses enfants une semaine sur deux.<br>
+            Ce planning change tous les vendredis à 18h.
+        </div>
+    </div>
+
+    <script>
+        function updateKidsWeek() {
+            // This should be a Friday 6pm when your friend HAS his kids
+            const referenceDate = new Date('2024-10-03T18:00:00');
+            
+            // Get current date from input or use actual current date
+            const currentDateInput = document.getElementById('currentDate');
+            let now;
+            
+            if (currentDateInput?.value) {
+                now = new Date(currentDateInput.value);
+            } else {
+                now = new Date();
+            }
+            
+            // Get the start of current week (Friday 8pm)
+            // We need to find the most recent Friday 8pm that has passed
+            const currentFriday = new Date(now);
+            const day = currentFriday.getDay();
+            
+            // Calculate days to go back to the most recent Friday 8pm
+            let daysToGoBack;
+            if (day < 5) {
+                // Before Friday this week - go to last week's Friday
+                daysToGoBack = day + 2;
+            } else if (day === 5) {
+                // It's Friday - check if before or after 8pm
+                if (now.getHours() < 18) {
+                    // Before 8pm - go to last week's Friday
+                    daysToGoBack = 7;
+                } else {
+                    // After 8pm - use today
+                    daysToGoBack = 0;
+                }
+            } else {
+                // Saturday (6) or Sunday (0)
+                daysToGoBack = day === 6 ? 1 : 2;
+            }
+            
+            currentFriday.setDate(currentFriday.getDate() - daysToGoBack);
+            currentFriday.setHours(18, 0, 0, 0);
+            
+            // Get the reference Friday 8pm
+            const referenceFriday = new Date(referenceDate);
+            referenceFriday.setHours(18, 0, 0, 0);
+            
+            // Calculate weeks difference
+            const weeksDiff = Math.floor((currentFriday - referenceFriday) / (1000 * 60 * 60 * 24 * 7));
+            
+            // If weeks difference is even, same as reference week. If odd, opposite week.
+            const hasKids = weeksDiff % 2 === 0;
+            
+            const body = document.body;
+            const answer = document.getElementById('answer');
+            const subtitle = document.getElementById('subtitle');
+            
+            if (hasKids) {
+                body.className = 'yes';
+                answer.textContent = 'OUI';
+                subtitle.innerHTML = 'Les enfants sont chez le saint père le <input type="date" id="currentDate" class="inline-date-input" /> 👨‍👧‍👦';
+            } else {
+                body.className = 'no';
+                answer.textContent = 'NON';
+                subtitle.innerHTML = 'Les enfants sont chez la reine mère le <input type="date" id="currentDate" class="inline-date-input" /> 👨‍👧‍👦';
+            }
+            
+            // Calculate next change
+            const nextFriday = new Date(currentFriday);
+            nextFriday.setDate(nextFriday.getDate() + 7);
+            
+            const timeUntilChange = nextFriday - now;
+            const daysUntilChange = Math.floor(timeUntilChange / (1000 * 60 * 60 * 24));
+            const hoursUntilChange = Math.floor((timeUntilChange % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesUntilChange = Math.floor((timeUntilChange % (1000 * 60 * 60)) / (1000 * 60));
+            
+            const countdown = document.getElementById('countdown');
+            countdown.innerHTML = `
+                Le planning change dans :<br>
+                <strong>${daysUntilChange} jours, ${hoursUntilChange} heures, ${minutesUntilChange} minutes</strong>
+            `;
+            
+            // Initialize the date input after the subtitle is updated
+            initializeDateInput(now);
+        }
+        
+        // Initialize date input
+        function initializeDateInput(date) {
+            const currentInput = document.getElementById('currentDate');
+            
+            // Remove existing event listener to avoid duplicates
+            currentInput.removeEventListener('change', updateKidsWeek);
+            
+            // Add event listener
+            currentInput.addEventListener('change', updateKidsWeek);
+
+            // Set input value to current date in YYYY-MM-DD format
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            currentInput.value = `${year}-${month}-${day}`;
+        }
+        
+        // Update immediately and then every minute
+        updateKidsWeek();
+        setInterval(updateKidsWeek, 60000);
+    </script>
+</body>
+</html>
